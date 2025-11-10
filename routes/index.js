@@ -10,6 +10,7 @@ const users = require("./users.js");
 const languages = require("./languages");
 const orders = require("./orders");
 const dashboard = require("./dashboard.js")
+const contactUs = require("./contactUs.js")
 
 router.use("/auth", userData);
 router.use("/products", products);
@@ -22,5 +23,6 @@ router.use("/blog", blogs);
 router.use("/orders", orders);
 router.use("/users", users);
 router.use("/dashboard", dashboard)
+router.use("/contactUs", contactUs)
 
 module.exports = router;

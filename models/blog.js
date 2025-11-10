@@ -8,6 +8,12 @@ const blogSchema = new mongoose.Schema(
       trim: true,
     },
 
+    blogSlug: {
+      type: String,
+      required: true,
+      trim: true, 
+    },
+
     shortDescription: {
       type: String,
       required: true,

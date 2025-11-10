@@ -5,10 +5,23 @@ const cart = require("../models/cart");
 const Order = require("../models/orders.js");
 const categories = require("../models/category.js");
 
+const generateSlug = (name) => {
+  return name
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")         
+    .replace(/[^\w\-]+/g, "")     
+    .replace(/\-\-+/g, "-")       
+    .replace(/-+$/, "");        
+};
+
+
 const createProduct = async (req, res) => {
   try {
     const {
       productName,
+      productSlug,
       price,
       discountedPrice,
       isBestSeller,
@@ -49,8 +62,11 @@ const createProduct = async (req, res) => {
       await products.updateOne({isDealOfTheWeek : true}, {$set: { isDealOfTheWeek: false }})
   }
 
+      // const productSlug = generateSlug(productName);
+
     const newProduct = await products.create({
       productName,
+      productSlug,
       image: req.file.filename,
       price: parserdPrice,
       isBestSeller,
@@ -143,6 +159,7 @@ const getAllProducts = async (req, res) => {
         $project: {
           _id: 1,
           productName: 1,
+          productSlug: 1,
           image: 1,
           price: 1,
           discountedPrice: 1,
@@ -208,6 +225,7 @@ const getProductsBasedOnCategory = async (req, res) => {
       {
         $project: {
           productName: 1,
+          productSlug: 1,
           discountedPrice: 1,
           image: 1,
         },
@@ -239,6 +257,7 @@ const getBestSellingProducts = async (req, res) => {
         $project: {
           productName: 1,
           discountedPrice: 1,
+          productSlug: 1,
           image: 1,
         },
       },
@@ -266,6 +285,7 @@ const getTrendingProducts = async (req, res) => {
         $group: {
           _id: "$cartItems.productId",
           productName: { $first: "$cartItems.productName" },
+          productSlug: {$first: "$cartItems.productSlug"},
           productImage: { $first: "$cartItems.image" },
           price: { $first: "$cartItems.price" },
           discountedPrice: { $first: "$cartItems.discountedPrice" },
@@ -319,21 +339,125 @@ const getDealOfTheWeekProduct = async(req,res) => {
     }
 }
 
+// const getProduct = async (req, res) => {
+//   try {
+//     const productId = req.params.id?.trim();
+
+//     if (!mongoose.Types.ObjectId.isValid(productId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid product ID format",
+//       });
+//     }
+
+//     const isProductAvailableInCart = await cart.aggregate([
+//       {
+//         $match: { productId: new mongoose.Types.ObjectId(productId) },
+//       },
+//       {
+//         $lookup: {
+//           from: "products",
+//           localField: "productId",
+//           foreignField: "_id",
+//           as: "productDetails",
+//         },
+//       },
+//       { $unwind: "$productDetails" },
+//       {
+//         $lookup: {
+//           from: "categories",
+//           localField: "productDetails.categoryId",
+//           foreignField: "_id",
+//           as: "category",
+//         },
+//       },
+//       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+//       {
+//         $addFields: {
+//           productName: "$productDetails.productName",
+//           price: "$productDetails.price",
+//           discountedPrice: "$productDetails.discountedPrice",
+//           image: "$productDetails.image",
+//           quantity: "$quantity",
+//           categoryName: "$category.name",
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           productDetails: 0,
+//           category: 0,
+//         },
+//       },
+//     ]);
+
+//     if (!isProductAvailableInCart.length) {
+//       const singleProduct = await products.aggregate([
+//         {
+//           $match: { _id: new mongoose.Types.ObjectId(productId) },
+//         },
+//         {
+//           $lookup: {
+//             from: "categories",
+//             localField: "categoryId",
+//             foreignField: "_id",
+//             as: "category",
+//           },
+//         },
+//         { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+//         {
+//           $project: {
+//             _id: 1,
+//             productName: 1,
+//             price: 1,
+//             discountedPrice: 1,
+//             image: 1,
+//             categoryName: "$category.name",
+//           },
+//         },
+//       ]);
+
+//       console.log("Fetched single product:", singleProduct);
+
+//       if (!singleProduct.length) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Product not found!",
+//         });
+//       }
+
+//       return res.status(200).json({
+//         success: true,
+//         data: { ...singleProduct[0], quantity: 1 },
+//         message: "Product fetched successfully!",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       data: isProductAvailableInCart,
+//       message: "Product fetched successfully!",
+//     });
+//   } catch (error) {
+//     console.error("Error fetching product:", error.message);
+//     return res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+
 const getProduct = async (req, res) => {
   try {
-    const productId = req.params.id?.trim();
+    const productSlug = req.params.productSlug?.trim();
 
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid product ID format",
-      });
-    }
+    // if (!mongoose.Types.ObjectId.isValid(productId)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid product ID format",
+    //   });
+    // }
 
     const isProductAvailableInCart = await cart.aggregate([
-      {
-        $match: { productId: new mongoose.Types.ObjectId(productId) },
-      },
+  
       {
         $lookup: {
           from: "products",
@@ -362,6 +486,10 @@ const getProduct = async (req, res) => {
           categoryName: "$category.name",
         },
       },
+  {
+     $match: { productSlug: { $regex: productSlug, $options: "i" } }
+  },
+
       {
         $project: {
           _id: 0,
@@ -374,7 +502,7 @@ const getProduct = async (req, res) => {
     if (!isProductAvailableInCart.length) {
       const singleProduct = await products.aggregate([
         {
-          $match: { _id: new mongoose.Types.ObjectId(productId) },
+          $match: { productSlug: { $regex: productSlug, $options: "i" } },
         },
         {
           $lookup: {
@@ -479,6 +607,7 @@ const getAllProductsForDashboard = async (req, res) => {
         $project: {
           _id: 1,
           productName: 1,
+          productSlug: 1,
           image: 1,
           price: 1,
           discountedPrice: 1,
@@ -528,6 +657,7 @@ const updatedProduct = async (req, res) => {
 
     const {
       productName,
+      productSlug,
       price,
       discountedPrice,
       isBestSeller,
@@ -543,9 +673,13 @@ const updatedProduct = async (req, res) => {
       await products.updateOne({isDealOfTheWeek : true}, {$set: { isDealOfTheWeek: false }})
   }
 
+      // const productSlug = productName
+      // ? generateSlug(productName)
+      // : isPorductAvailable.productSlug;
 
     const upatedProductData = {
       productName,
+      productSlug,
       image: imageToUse,
       price,
       discountedPrice,

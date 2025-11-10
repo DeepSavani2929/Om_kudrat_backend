@@ -1,8 +1,21 @@
 const Blog = require("../models/blog");
 
+// const generateSlug = (name) => {
+//   return name
+//     .toString()
+//     .trim()
+//     .toLowerCase()
+//     .replace(/\s+/g, "-")         
+//     .replace(/[^\w\-]+/g, "")     
+//     .replace(/\-\-+/g, "-")       
+//     .replace(/-+$/, "");        
+// };
+
+
+
 const createBlog = async (req, res) => {
   try {
-    const { blogTitle, shortDescription, content } = req.body;
+    const { blogTitle, blogSlug, shortDescription, content } = req.body;
 
     const blogImage = req.file ? req.file.filename : null;
 
@@ -13,8 +26,11 @@ const createBlog = async (req, res) => {
       });
     }
 
+    // const blogSlug = generateSlug(blogTitle);
+
     const addedBlog = await Blog.create({
       blogTitle,
+      blogSlug,
       shortDescription,
       blogImage,
       content,
@@ -88,8 +104,8 @@ const getAllBlogs = async (req, res) => {
 
 const getBlog = async (req, res) => {
   try {
-    const { id } = req.params;
-    const particularBlog = await Blog.findById(id);
+    const { blogSlug } = req.params;
+    const particularBlog = await Blog.findOne({ blogSlug: blogSlug});
 
     if (!particularBlog) {
       return res.status(404).json({
@@ -113,9 +129,9 @@ const getBlog = async (req, res) => {
 
 const getOtherBlogs = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { blogSlug } = req.params;
 
-    const blogs = await Blog.find({ _id: { $ne: id } }).limit(4);
+    const blogs = await Blog.find({ blogSlug: { $ne: blogSlug } }).limit(4);
 
     if (!blogs || blogs.length === 0) {
       return res.status(404).json({
@@ -141,9 +157,10 @@ const getOtherBlogs = async (req, res) => {
 
 const editBlog = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { blogSlug } = req.params;
+     const { blogTitle,shortDescription, content } = req.body;
 
-    const existingBlog = await Blog.findById(id);
+    const existingBlog = await Blog.findOne({blogSlug: blogSlug});
     if (!existingBlog) {
       return res.status(404).json({
         success: false,
@@ -151,13 +168,15 @@ const editBlog = async (req, res) => {
       });
     }
 
-    const { blogTitle, shortDescription, content } = req.body;
+ 
     console.log(req.body);
     const blogImage = req.file ? req.file.filename : existingBlog.blogImage;
 
+      // const blogSlug = generateSlug(blogTitle);
+
     const updatedBlog = await Blog.findByIdAndUpdate(
-      id,
-      { $set: { blogTitle, shortDescription, content, blogImage } },
+      existingBlog._id,
+      { $set: { blogTitle, blogSlug, shortDescription, content, blogImage } },
       { new: true }
     );
 

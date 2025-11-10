@@ -36,7 +36,7 @@ router.post(
 );
 router.get("/getProducts", getAllProducts);
 router.get("/getAllProductsForDashboard", getAllProductsForDashboard);
-router.get("/getProduct/:id", getProduct);
+router.get("/getProduct/:productSlug", getProduct);
 router.get("/getProductsBasedOnCategory", getProductsBasedOnCategory);
 router.get("/getBestSellingProducts", getBestSellingProducts);
 router.get("/getTrendingProducts", getTrendingProducts);

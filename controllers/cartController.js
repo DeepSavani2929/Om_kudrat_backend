@@ -51,6 +51,7 @@ const getCartProducts = async (req, res) => {
       {
         $addFields: {
           productName: "$productDetails.productName",
+          productSlug: "$productDetails.productSlug",
           price: "$productDetails.price",
           discountedPrice: "$productDetails.discountedPrice",
           image: "$productDetails.image",

@@ -30,11 +30,11 @@ router.post(
   createBlog
 );
 router.get("/getAllBlogs", getAllBlogs);
-router.get("/getBlog/:id", getBlog);
-router.get("/getOtherBlogs/:id", getOtherBlogs);
+router.get("/getBlog/:blogSlug", getBlog);
+router.get("/getOtherBlogs/:blogSlug", getOtherBlogs);
 router.get("/getTopThreeRecentBlogs", getTopThreeRecentBlogs);
 router.put(
-  "/updateBlog/:id",
+  "/updateBlog/:blogSlug",
   authorization(["Admin"]),
   upload.single("blogImage"),
   editBlog
