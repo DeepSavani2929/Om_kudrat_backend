@@ -26,7 +26,6 @@ const getAllOrders = async (req, res) => {
       matchStage.totalAmount = {};
       if (minAmount) matchStage.totalAmount.$gte = parseFloat(minAmount);
       if (maxAmount) matchStage.totalAmount.$lte = parseFloat(maxAmount);
-
     }
 
     const allOrders = await orders.aggregate([
